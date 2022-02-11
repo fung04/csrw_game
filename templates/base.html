@@ -1,0 +1,112 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        <title>CSRW Games</title>
+{#        <!-- Favicon-->#}
+        <link rel="icon" type="image/x-icon" href="{% static 'homepage/icon/pulse.webp' %}" />
+{#        <!-- Bootstrap icons-->#}
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet" />
+{#        <!-- Core theme CSS (includes Bootstrap)-->#}
+        <link href="{% static "homepage/style/styles.css" %}" rel="stylesheet" />
+    </head>
+    {% url 'homepage:homepage' as home %}
+    {% url 'hompage:score' as score %}
+{#        <!-- Responsive navbar-->#}
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container px-lg-5">
+                <a class="navbar-brand" href="{{ home }}">
+                    <img src="{% static 'homepage/icon/pulse.webp' %}" width="35" height="35" class="d-inline-block align-bottom" alt="">
+                    CSRW Games
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == home %}active{% endif %}" aria-current="page" href="{% url 'homepage:homepage' %}">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == score %}active{% endif %}" aria-current="page" href="{% url 'homepage:score' %}">Result</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == join %}active{% endif %}" aria-current="page" href="https://cutt.ly/csrw_reg" target="_blank" rel="noopener noreferrer">Join Now</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+{#        <!-- Header-->#}
+        <header class="py-5">
+            <div class="container px-lg-5">
+                <div class="p-4 p-lg-5 bg-light rounded-3 text-center">
+                    <div class="m-3 m-lg-4">
+                        {% if user.is_authenticated and request.path == score%}
+                            <h1 class="display-5 fw-bold text-decoration-underline">Game Result</h1>
+                            <p class="fs-4">Below are the results of the top 5 places of each game.</p>
+                            <a class="btn btn-primary btn-lg" href="{% url 'homepage:homepage' %}"><i class="bi bi-house"></i>&nbsp;Home</a>
+                            <a class="btn btn-danger btn-lg" href="{% url 'homepage:logout' %}"><i class="bi bi-box-arrow-right"></i>&nbsp;Logout</a>
+                            <div class="p-0 pt-2">
+                                <a type="button" class="btn btn-success btn-lg btn-block " href="https://cutt.ly/csrw_reglist" target="_blank" rel="noopener noreferrer">Join Clubs and Societies Now</a>
+                            </div>
+                        {% elif user.is_authenticated and request.path == home %}
+                            <h1 class="display-5 fw-bold">Welcome</h1>
+                            <h2 class="display-5 fw-bold">{{ user.first_name }} !</h2>
+                            <p class="fs-5 m-0">CSRW presents to you our very own mini-games! So, what are you waiting for?</p>
+                            <p class="fs-5"> Click the play button and grab a chance to win amazing prizes.</p>
+                            <a class="btn btn-primary btn-lg" href="{% url 'homepage:score' %}"><i class="bi bi-file-earmark-text"></i>&nbsp;Result</a>
+                            <a class="btn btn-danger btn-lg" href="{% url 'homepage:logout' %}"><i class="bi bi-box-arrow-right"></i>&nbsp;Logout</a>
+                            <div class="p-0 pt-2">
+                                <a type="button" class="btn btn-success btn-lg btn-block" href="https://cutt.ly/csrw_reg" target="_blank" rel="noopener noreferrer" >Join Clubs and Societies Now</a>
+                            </div>
+                        {% else %}
+                            <h1 class="display-5 fw-bold">Hello,</h1>
+                            <h2 class="display-5 fw-bold">Please login first.</h2>
+                            <p class="fs-5 m-0">CSRW presents to you our very own mini-games! This platform determines the top 3 winners for each game.</p>
+                            <p class="fs-5">So, what are you waiting for? Sign up with your <strong>student email</strong> and grab your chance to win amazing prizes.</p>
+                            <a class="btn btn-lg btn-outline-danger" href="{% url 'social:begin' 'google-oauth2' %}" style="text-transform:none">
+                                  Login with Google
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </header>
+    <body>
+            {% block content %}
+
+            {% endblock %}
+        {% if obj.video %}
+
+        <script async defer src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v3.2"></script>
+            <section class="p-lg-5 pt-0 pb-3">
+                <div class="container px-lg-5">
+                    <div class="fb-video"
+                         data-href="{{ obj.live_link }}"
+                         data-allowfullscreen="false"
+                         data-show-text="false">
+                    </div>
+                </div>
+            </section>
+        {% endif %}
+
+    </body>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+    {% if obj.video %}
+        <footer class="p-3 bg-dark">
+            <div class="container"><p class="m-0 text-center text-white">Made with ❤ by <a class="link-light" href="https://www.facebook.com/pulseofmmu" target="_blank" rel="noopener noreferrer">Pulse of MMU </a> </p></div>
+        </footer>
+    {% else %}
+        <footer class="py-1 bg-dark fixed-bottom ">
+            <div class="container"><p class="m-0 text-center text-white">Made with ❤ by <a class="link-light" href="https://www.facebook.com/pulseofmmu" target="_blank" rel="noopener noreferrer">Pulse of MMU </a> </p></div>
+        </footer>
+    {% endif %}
+</html>

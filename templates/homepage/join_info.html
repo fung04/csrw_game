@@ -1,0 +1,34 @@
+{% extends 'base.html'%}
+{% load static %}
+
+{% block content %}
+<section class="p-4 pt-2">
+    <div class="container px-lg-5">
+        <!-- Page Features-->
+        <div class="row gx-lg-5">
+           <div class="align-middle table-responsive">
+              <table class="table table-bordered text-center">
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">Clubs and Societies</th>
+                      <th scope="col">Links</th>
+                    </tr>
+                  </thead>
+                  {% for i in obj %}
+                    {% with item=i %}
+                          <tbody>
+                            <tr>
+                              <th scope="row">{{ forloop.counter }}</th>
+                              <td>{{ item.club_name }}</td>
+                              <td><a  class="btn btn-primary btn-sm" href="{{ item.link }}">Join</a></td>
+                            </tr>
+                          </tbody>
+                      {% endwith  %}
+                  {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

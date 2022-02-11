@@ -1,0 +1,46 @@
+{% extends 'base.html'%}
+{% load static %}
+
+{% block content %}
+    <!-- Why are you here? -->
+
+{#        <!-- Page Content-->#}
+        <section class="pt-4">
+            <div class="container px-lg-5">
+{#                <!-- Page Features-->#}
+                <div class="row gx-lg-5">
+                    <div class="col-lg-6 col-xxl-4 mb-5">
+                        <div class="card bg-light border-0 h-100">
+                            <div class="card-body text-center p-4 p-lg-5 pt-0 pt-lg-0">
+                                    <div class="feature bg-secondary bg-gradient rounded-3 mb-4 mt-n4"><img src="{% static "homepage/icon/2048.webp" %}" style="width:50px;height:50px;"></div>
+                                <h2 class="fs-4 fw-bold">2048 Game</h2>
+                                <p class="mb-0">Slide numbered tiles on a grid to combine them to create a tile with the number 2048</p>
+                            </div>
+                            <a class="btn btn-success btn-lg" href="{% url 'game_2048:game' %}">Play</a>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-xxl-4 mb-5">
+                        <div class="card bg-light border-0 h-100">
+                            <div class="card-body text-center p-4 p-lg-5 pt-0 pt-lg-0">
+                                <div class="feature bg-secondary bg-gradient text-white rounded-3 mb-4 mt-n4"><img src="{% static "homepage/icon/flappy.webp" %}" style="width:55px;height:40px;"></div>
+                                <h2 class="fs-4 fw-bold">Flappy Bird</h2>
+                                <p class="mb-0"> Controls a bird, attempting to fly between columns of green pipes without hitting them. </p>
+                            </div>
+                            <a class="btn btn-success btn-lg" href="{% url 'game_flappy:game' %}">Play</a>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-xxl-4 mb-5 ">
+                        <div class="card bg-light border-0 h-100">
+                            <div class="card-body text-center p-4 p-lg-5 pt-0 pt-lg-0">
+                                <div class="feature bg-secondary bg-gradient text-white rounded-3 mb-4 mt-n4"><img src="{% static "homepage/icon/trex.webp" %}" style="width:48px;height:44px;"></div>
+                                <h2 class="fs-4 fw-bold">Dinosaur Runner</h2>
+                                <p class="mb-0"> Running dinosaur across a desert landscape, and the avoids oncoming obstacles by jumping or ducking,</p>
+                            </div>
+                            <a class="btn btn-success btn-lg" href="{% url 'game_trex:game' %}">Play</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+{% endblock %}
+
