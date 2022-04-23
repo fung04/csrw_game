@@ -15,7 +15,7 @@ def game(request):
     return render(request, "game_trex/index.html", {'result': obj})
 
 
-def get_score(request):
+def set_result(request):
     user = request.user if str(request.user) != "AnonymousUser" else User.objects.get(username='test_user')
 
     if request.method == 'POST':
@@ -38,3 +38,11 @@ def get_score(request):
         return redirect('game_trex:game')
 
     return JsonResponse("", safe=False)
+
+
+def get_result(request):
+    user = request.user if str(request.user) != "AnonymousUser" else User.objects.get(username='test_user')
+
+    if request.method == 'GET':
+        obj = GameTrex.objects.get(user=user)
+        return JsonResponse({'score': obj.best_distance})

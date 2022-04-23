@@ -4,7 +4,7 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.storageManager = new StorageManager;
   this.actuator       = new Actuator;
 
-  this.temp = null;
+  this.tempGameState = null;
   this.startTiles     = 2;
 
   this.inputManager.on("move", this.move.bind(this));
@@ -24,12 +24,12 @@ GameManager.prototype.restart = function () {
 
 GameManager.prototype.save = function (terminate) {
 
-  let getState = btoa(JSON.stringify(this.serialize()));
+  let getGameState = btoa(JSON.stringify(this.serialize()));
 
-  if(this.temp !== getState){
-    this.temp = getState;
+  if(this.tempGameState !== getGameState){
+    this.tempGameState = getGameState;
 
-    fetch("/game-2048/result/", {
+    fetch("/game-2048/set-result/", {
         method: "post",
         credentials: "same-origin",
         headers: {
@@ -37,20 +37,11 @@ GameManager.prototype.save = function (terminate) {
             "Accept": "application/json",
             "Content-Type": "application/json"
         },
-        body: getState
-    })
-
-   // $.ajax({
-   //    url: 'score-getter/',
-   //    type: 'post',
-   //    data: {
-   //        state : window.btoa(getState),
-   //        csrfmiddlewaretoken: token
-   //    },
-   //  });
+        body: getGameState
+    });
   }
 
-  // this.actuator.continueGame(); // Clear the game_flappy won/lost message
+  // Clear the game_flappy won/lost message
   if(terminate !== true) this.setup();
 
 };

@@ -2,6 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 // extract from chromium source code by @liuwayong
+
+// fetch score form server before start game
+
+
 (function () {
     'use strict';
     /**
@@ -11,21 +15,22 @@
      * @constructor
      * @export
      */
-    function pao(outerContainerId, opt_config) {
+
+    function Runner(outerContainerId, opt_config) {
         // Singleton
-        if (pao.instance_) {
-            return pao.instance_;
+        if (Runner.instance_) {
+            return Runner.instance_;
         }
-        pao.instance_ = this;
+        Runner.instance_ = this;
 
         this.outerContainerEl = document.querySelector(outerContainerId);
         this.containerEl = null;
         this.snackbarEl = null;
         this.detailsButton = this.outerContainerEl.querySelector('#details-button');
 
-        this.config = opt_config || pao.config;
+        this.config = opt_config || Runner.config;
 
-        this.dimensions = pao.defaultDimensions;
+        this.dimensions = Runner.defaultDimensions;
 
         this.canvas = null;
         this.canvasCtx = null;
@@ -71,8 +76,7 @@
             this.loadImages();
         }
     }
-    window['pao'] = pao;
-
+    window['Runner'] = Runner;
 
     /**
      * Default game width.
@@ -102,7 +106,7 @@
      * Default game configuration.
      * @enum {number}
      */
-    pao.config = {
+    Runner.config = {
         ACCELERATION: 0.001,
         BG_CLOUD_SPEED: 0.2,
         BOTTOM_PAD: 10,
@@ -131,7 +135,7 @@
      * Default dimensions.
      * @enum {string}
      */
-    pao.defaultDimensions = {
+    Runner.defaultDimensions = {
         WIDTH: DEFAULT_WIDTH,
         HEIGHT: 150
     };
@@ -141,7 +145,7 @@
      * CSS class names.
      * @enum {string}
      */
-    pao.classes = {
+    Runner.classes = {
         CANVAS: 'runner-canvas',
         CONTAINER: 'runner-container',
         CRASHED: 'crashed',
@@ -157,7 +161,7 @@
      * Sprite definition layout of the spritesheet.
      * @enum {Object}
      */
-    pao.spriteDefinition = {
+    Runner.spriteDefinition = {
         LDPI: {
             CACTUS_LARGE: { x: 332, y: 2 },
             CACTUS_SMALL: { x: 228, y: 2 },
@@ -189,7 +193,7 @@
      * Sound FX. Reference to the ID of the audio tag on interstitial page.
      * @enum {string}
      */
-    pao.sounds = {
+    Runner.sounds = {
         BUTTON_PRESS: 'offline-sound-press',
         HIT: 'offline-sound-hit',
         SCORE: 'offline-sound-reached'
@@ -200,7 +204,7 @@
      * Key code mapping.
      * @enum {Object}
      */
-    pao.keycodes = {
+    Runner.keycodes = {
         JUMP: { '38': 1, '32': 1 },  // Up, spacebar
         DUCK: { '40': 1 },  // Down
         RESTART: { '13': 1 }  // Enter
@@ -211,7 +215,7 @@
      * Runner event names.
      * @enum {string}
      */
-    pao.events = {
+    Runner.events = {
         ANIM_END: 'webkitAnimationEnd',
         CLICK: 'click',
         KEYDOWN: 'keydown',
@@ -228,11 +232,24 @@
     };
 
 
-    pao.prototype = {
+    Runner.prototype = {
         /**
          * Whether the easter egg has been disabled. CrOS enterprise enrolled devices.
          * @return {boolean}
          */
+        fetchScore: function() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/game-trex/get-result/', true);
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    console.log(response.score);
+                    Runner.highestScore = response.score;
+                }
+            }
+            xhr.send();
+        },
+
         isDisabled: function () {
             // return loadTimeData && loadTimeData.valueExists('disabledEasterEgg');
             return false;
@@ -243,14 +260,14 @@
          */
         setupDisabledRunner: function () {
             this.containerEl = document.createElement('div');
-            this.containerEl.className = pao.classes.SNACKBAR;
+            this.containerEl.className = Runner.classes.SNACKBAR;
             this.containerEl.textContent = loadTimeData.getValue('disabledEasterEgg');
             this.outerContainerEl.appendChild(this.containerEl);
 
             // Show notification when the activation key is pressed.
-            document.addEventListener(pao.events.KEYDOWN, function (e) {
-                if (pao.keycodes.JUMP[e.keyCode]) {
-                    this.containerEl.classList.add(pao.classes.SNACKBAR_SHOW);
+            document.addEventListener(Runner.events.KEYDOWN, function (e) {
+                if (Runner.keycodes.JUMP[e.keyCode]) {
+                    this.containerEl.classList.add(Runner.classes.SNACKBAR_SHOW);
                     document.querySelector('.icon').classList.add('icon-disabled');
                 }
             }.bind(this));
@@ -287,18 +304,18 @@
          */
         loadImages: function () {
             if (IS_HIDPI) {
-                pao.imageSprite = document.getElementById('offline-resources-2x');
-                this.spriteDef = pao.spriteDefinition.HDPI;
+                Runner.imageSprite = document.getElementById('offline-resources-2x');
+                this.spriteDef = Runner.spriteDefinition.HDPI;
             } else {
-                pao.imageSprite = document.getElementById('offline-resources-1x');
-                this.spriteDef = pao.spriteDefinition.LDPI;
+                Runner.imageSprite = document.getElementById('offline-resources-1x');
+                this.spriteDef = Runner.spriteDefinition.LDPI;
             }
 
-            if (pao.imageSprite.complete) {
+            if (Runner.imageSprite.complete) {
                 this.init();
             } else {
                 // If the images are not yet loaded, add a listener.
-                pao.imageSprite.addEventListener(pao.events.LOAD,
+                Runner.imageSprite.addEventListener(Runner.events.LOAD,
                     this.init.bind(this));
             }
         },
@@ -313,9 +330,9 @@
                 var resourceTemplate =
                     document.getElementById(this.config.RESOURCE_TEMPLATE_ID).content;
 
-                for (var sound in pao.sounds) {
+                for (var sound in Runner.sounds) {
                     var soundSrc =
-                        resourceTemplate.getElementById(pao.sounds[sound]).src;
+                        resourceTemplate.getElementById(Runner.sounds[sound]).src;
                     soundSrc = soundSrc.substr(soundSrc.indexOf(',') + 1);
                     var buffer = decodeBase64ToArrayBuffer(soundSrc);
 
@@ -348,8 +365,13 @@
          * Game initialiser.
          */
         init: function () {
+
+            this.fetchScore();
+
+            console.log(this.highestScore);
+
             // Hide the static icon.
-            document.querySelector('.' + pao.classes.ICON).style.visibility =
+            document.querySelector('.' + Runner.classes.ICON).style.visibility =
                 'hidden';
 
             this.adjustDimensions();
@@ -357,16 +379,16 @@
 
 
             this.containerEl = document.createElement('div');
-            this.containerEl.className = pao.classes.CONTAINER;
+            this.containerEl.className = Runner.classes.CONTAINER;
 
             // Player canvas container.
             this.canvas = createCanvas(this.containerEl, this.dimensions.WIDTH,
-                this.dimensions.HEIGHT, pao.classes.PLAYER);
+                this.dimensions.HEIGHT, Runner.classes.PLAYER);
 
             this.canvasCtx = this.canvas.getContext('2d');
             this.canvasCtx.fillStyle = '#f7f7f7';
             this.canvasCtx.fill();
-            pao.updateCanvasScaling(this.canvas);
+            Runner.updateCanvasScaling(this.canvas);
 
             // Horizon contains clouds, obstacles and the ground.
             this.horizon = new Horizon(this.canvas, this.spriteDef, this.dimensions,
@@ -388,7 +410,7 @@
             this.startListening();
             this.update();
 
-            window.addEventListener(pao.events.RESIZE,
+            window.addEventListener(Runner.events.RESIZE,
                 this.debounceResize.bind(this));
         },
 
@@ -397,7 +419,7 @@
          */
         createTouchController: function () {
             this.touchController = document.createElement('div');
-            this.touchController.className = pao.classes.TOUCH_CONTROLLER;
+            this.touchController.className = Runner.classes.TOUCH_CONTROLLER;
             this.outerContainerEl.appendChild(this.touchController);
         },
 
@@ -429,7 +451,7 @@
                 this.canvas.width = this.dimensions.WIDTH;
                 this.canvas.height = this.dimensions.HEIGHT;
 
-                pao.updateCanvasScaling(this.canvas);
+                Runner.updateCanvasScaling(this.canvas);
 
                 this.distanceMeter.calcXPos(this.dimensions.WIDTH);
                 this.clearCanvas();
@@ -475,7 +497,7 @@
                 sheet.innerHTML = keyframes;
                 document.head.appendChild(sheet);
 
-                this.containerEl.addEventListener(pao.events.ANIM_END,
+                this.containerEl.addEventListener(Runner.events.ANIM_END,
                     this.startGame.bind(this));
 
                 this.containerEl.style.webkitAnimation = 'intro .4s ease-out 1 both';
@@ -487,7 +509,11 @@
                 this.playing = true;
                 this.activated = true;
 
-                this.highestScore = m;
+                // let server data to become int
+
+
+                this.highestScore = Runner.highestScore;
+                console.log("the intro "+ this.highestScore)
                 this.distanceMeter.setHighScore(this.highestScore);
 
             } else if (this.crashed) {
@@ -512,13 +538,13 @@
             // console.log(test+" dda")
 
             // Handle tabbing off the page. Pause the current game.
-            document.addEventListener(pao.events.VISIBILITY,
+            document.addEventListener(Runner.events.VISIBILITY,
                 this.onVisibilityChange.bind(this));
 
-            window.addEventListener(pao.events.BLUR,
+            window.addEventListener(Runner.events.BLUR,
                 this.onVisibilityChange.bind(this));
 
-            window.addEventListener(pao.events.FOCUS,
+            window.addEventListener(Runner.events.FOCUS,
                 this.onVisibilityChange.bind(this));
         },
 
@@ -606,7 +632,7 @@
             }
 
             if (this.playing || (!this.activated &&
-                this.tRex.blinkCount < pao.config.MAX_BLINK_COUNT)) {
+                this.tRex.blinkCount < Runner.config.MAX_BLINK_COUNT)) {
                 this.tRex.update(deltaTime);
                 this.scheduleNextUpdate();
             }
@@ -629,7 +655,7 @@
                         this.onKeyUp(e);
                         break;
                 }
-            }.bind(this))(e.type, pao.events);
+            }.bind(this))(e.type, Runner.events);
         },
 
         /**
@@ -637,18 +663,18 @@
          */
         startListening: function () {
             // Keys.
-            document.addEventListener(pao.events.KEYDOWN, this);
-            document.addEventListener(pao.events.KEYUP, this);
+            document.addEventListener(Runner.events.KEYDOWN, this);
+            document.addEventListener(Runner.events.KEYUP, this);
 
             if (IS_MOBILE) {
                 // Mobile only touch devices.
-                this.touchController.addEventListener(pao.events.TOUCHSTART, this);
-                this.touchController.addEventListener(pao.events.TOUCHEND, this);
-                this.containerEl.addEventListener(pao.events.TOUCHSTART, this);
+                this.touchController.addEventListener(Runner.events.TOUCHSTART, this);
+                this.touchController.addEventListener(Runner.events.TOUCHEND, this);
+                this.containerEl.addEventListener(Runner.events.TOUCHSTART, this);
             } else {
                 // Mouse.
-                document.addEventListener(pao.events.MOUSEDOWN, this);
-                document.addEventListener(pao.events.MOUSEUP, this);
+                document.addEventListener(Runner.events.MOUSEDOWN, this);
+                document.addEventListener(Runner.events.MOUSEUP, this);
             }
         },
 
@@ -656,16 +682,16 @@
          * Remove all listeners.
          */
         stopListening: function () {
-            document.removeEventListener(pao.events.KEYDOWN, this);
-            document.removeEventListener(pao.events.KEYUP, this);
+            document.removeEventListener(Runner.events.KEYDOWN, this);
+            document.removeEventListener(Runner.events.KEYUP, this);
 
             if (IS_MOBILE) {
-                this.touchController.removeEventListener(pao.events.TOUCHSTART, this);
-                this.touchController.removeEventListener(pao.events.TOUCHEND, this);
-                this.containerEl.removeEventListener(pao.events.TOUCHSTART, this);
+                this.touchController.removeEventListener(Runner.events.TOUCHSTART, this);
+                this.touchController.removeEventListener(Runner.events.TOUCHEND, this);
+                this.containerEl.removeEventListener(Runner.events.TOUCHSTART, this);
             } else {
-                document.removeEventListener(pao.events.MOUSEDOWN, this);
-                document.removeEventListener(pao.events.MOUSEUP, this);
+                document.removeEventListener(Runner.events.MOUSEDOWN, this);
+                document.removeEventListener(Runner.events.MOUSEUP, this);
             }
         },
 
@@ -680,8 +706,8 @@
             }
 
             if (e.target != this.detailsButton) {
-                if (!this.crashed && (pao.keycodes.JUMP[e.keyCode] ||
-                    e.type == pao.events.TOUCHSTART)) {
+                if (!this.crashed && (Runner.keycodes.JUMP[e.keyCode] ||
+                    e.type == Runner.events.TOUCHSTART)) {
                     if (!this.playing) {
                         this.loadSounds();
                         this.playing = true;
@@ -697,13 +723,13 @@
                     }
                 }
 
-                if (this.crashed && e.type == pao.events.TOUCHSTART &&
+                if (this.crashed && e.type == Runner.events.TOUCHSTART &&
                     e.currentTarget == this.containerEl) {
                     this.restart();
                 }
             }
 
-            if (this.playing && !this.crashed && pao.keycodes.DUCK[e.keyCode]) {
+            if (this.playing && !this.crashed && Runner.keycodes.DUCK[e.keyCode]) {
                 e.preventDefault();
                 if (this.tRex.jumping) {
                     // Speed drop, activated only when jump key is not pressed.
@@ -722,22 +748,22 @@
          */
         onKeyUp: function (e) {
             var keyCode = String(e.keyCode);
-            var isjumpKey = pao.keycodes.JUMP[keyCode] ||
-                e.type == pao.events.TOUCHEND ||
-                e.type == pao.events.MOUSEDOWN;
+            var isjumpKey = Runner.keycodes.JUMP[keyCode] ||
+                e.type == Runner.events.TOUCHEND ||
+                e.type == Runner.events.MOUSEDOWN;
 
             if (this.isRunning() && isjumpKey) {
                 this.tRex.endJump();
-            } else if (pao.keycodes.DUCK[keyCode]) {
+            } else if (Runner.keycodes.DUCK[keyCode]) {
                 this.tRex.speedDrop = false;
                 this.tRex.setDuck(false);
             } else if (this.crashed) {
                 // Check that enough time has elapsed before allowing jump key to restart.
                 var deltaTime = getTimeStamp() - this.time;
 
-                if (pao.keycodes.RESTART[keyCode] || this.isLeftClickOnCanvas(e) ||
+                if (Runner.keycodes.RESTART[keyCode] || this.isLeftClickOnCanvas(e) ||
                     (deltaTime >= this.config.GAMEOVER_CLEAR_TIME &&
-                        pao.keycodes.JUMP[keyCode])) {
+                        Runner.keycodes.JUMP[keyCode])) {
                     this.restart();
                 }
             } else if (this.paused && isjumpKey) {
@@ -755,7 +781,7 @@
          */
         isLeftClickOnCanvas: function (e) {
             return e.button != null && e.button < 2 &&
-                e.type == pao.events.MOUSEUP && e.target == this.canvas;
+                e.type == Runner.events.MOUSEUP && e.target == this.canvas;
         },
 
         /**
@@ -834,7 +860,7 @@
                 this.distanceRan = 0;
                 this.setSpeed(this.config.SPEED);
                 this.time = getTimeStamp();
-                this.containerEl.classList.remove(pao.classes.CRASHED);
+                this.containerEl.classList.remove(Runner.classes.CRASHED);
                 this.clearCanvas();
                 this.distanceMeter.reset(this.highestScore);
                 this.horizon.reset();
@@ -877,11 +903,11 @@
          */
         invert: function (reset) {
             if (reset) {
-                document.body.classList.toggle(pao.classes.INVERTED, false);
+                document.body.classList.toggle(Runner.classes.INVERTED, false);
                 this.invertTimer = 0;
                 this.inverted = false;
             } else {
-                this.inverted = document.body.classList.toggle(pao.classes.INVERTED,
+                this.inverted = document.body.classList.toggle(Runner.classes.INVERTED,
                     this.invertTrigger);
             }
         }
@@ -901,7 +927,7 @@
      * @param {number} opt_height
      * @return {boolean} Whether the canvas was scaled.
      */
-    pao.updateCanvasScaling = function (canvas, opt_width, opt_height) {
+    Runner.updateCanvasScaling = function (canvas, opt_width, opt_height) {
         var context = canvas.getContext('2d');
 
         // Query the various pixel ratios
@@ -966,8 +992,8 @@
      */
     function createCanvas(container, width, height, opt_classname) {
         var canvas = document.createElement('canvas');
-        canvas.className = opt_classname ? pao.classes.CANVAS + ' ' +
-            opt_classname : pao.classes.CANVAS;
+        canvas.className = opt_classname ? Runner.classes.CANVAS + ' ' +
+            opt_classname : Runner.classes.CANVAS;
         canvas.width = width;
         canvas.height = height;
         container.appendChild(canvas);
@@ -1087,12 +1113,12 @@
             textSourceY += this.textImgPos.y;
 
             // Game over text from sprite.
-            this.canvasCtx.drawImage(pao.imageSprite,
+            this.canvasCtx.drawImage(Runner.imageSprite,
                 textSourceX, textSourceY, textSourceWidth, textSourceHeight,
                 textTargetX, textTargetY, textTargetWidth, textTargetHeight);
 
             // Restart button.
-            this.canvasCtx.drawImage(pao.imageSprite,
+            this.canvasCtx.drawImage(Runner.imageSprite,
                 this.restartImgPos.x, this.restartImgPos.y,
                 restartSourceWidth, restartSourceHeight,
                 restartTargetX, restartTargetY, dimensions.RESTART_WIDTH,
@@ -1112,7 +1138,7 @@
      * @return {Array<CollisionBox>}
      */
     function checkForCollision(obstacle, tRex, opt_canvasCtx) {
-        var obstacleBoxXPos = pao.defaultDimensions.WIDTH + obstacle.xPos;
+        var obstacleBoxXPos = Runner.defaultDimensions.WIDTH + obstacle.xPos;
 
         // Adjustments are made to the bounding box as there is a 1 pixel white
         // border around the t-rex and obstacles.
@@ -1356,7 +1382,7 @@
                     sourceX += sourceWidth * this.currentFrame;
                 }
 
-                this.canvasCtx.drawImage(pao.imageSprite,
+                this.canvasCtx.drawImage(Runner.imageSprite,
                     sourceX, this.spritePos.y,
                     sourceWidth * this.size, sourceHeight,
                     this.xPos, this.yPos,
@@ -1621,8 +1647,8 @@
          * Sets the t-rex to blink at random intervals.
          */
         init: function () {
-            this.groundYPos = pao.defaultDimensions.HEIGHT - this.config.HEIGHT -
-                pao.config.BOTTOM_PAD;
+            this.groundYPos = Runner.defaultDimensions.HEIGHT - this.config.HEIGHT -
+                Runner.config.BOTTOM_PAD;
             this.yPos = this.groundYPos;
             this.minJumpHeight = this.groundYPos - this.config.MIN_JUMP_HEIGHT;
 
@@ -1711,7 +1737,7 @@
 
             // Ducking.
             if (this.ducking && this.status != Trex.status.CRASHED) {
-                this.canvasCtx.drawImage(pao.imageSprite, sourceX, sourceY,
+                this.canvasCtx.drawImage(Runner.imageSprite, sourceX, sourceY,
                     sourceWidth, sourceHeight,
                     this.xPos, this.yPos,
                     this.config.WIDTH_DUCK, this.config.HEIGHT);
@@ -1721,7 +1747,7 @@
                     this.xPos++;
                 }
                 // Standing / running
-                this.canvasCtx.drawImage(pao.imageSprite, sourceX, sourceY,
+                this.canvasCtx.drawImage(Runner.imageSprite, sourceX, sourceY,
                     sourceWidth, sourceHeight,
                     this.xPos, this.yPos,
                     this.config.WIDTH, this.config.HEIGHT);
@@ -1867,7 +1893,7 @@
     function DistanceMeter(canvas, spritePos, canvasWidth) {
         this.canvas = canvas;
         this.canvasCtx = canvas.getContext('2d');
-        this.image = pao.imageSprite;
+        this.image = Runner.imageSprite;
         this.spritePos = spritePos;
         this.x = 0;
         this.y = 5;
@@ -2107,7 +2133,7 @@
 
             let result = JSON.stringify(this.highScore.concat(actual_distance))
 
-            fetch("/game-trex/result/", {
+            fetch("/game-trex/set-result/", {
                 method: "post",
                 credentials: "same-origin",
                 headers: {
@@ -2191,7 +2217,7 @@
                 sourceHeight = sourceHeight * 2;
             }
 
-            this.canvasCtx.drawImage(pao.imageSprite, this.spritePos.x,
+            this.canvasCtx.drawImage(Runner.imageSprite, this.spritePos.x,
                 this.spritePos.y,
                 sourceWidth, sourceHeight,
                 this.xPos, this.yPos,
@@ -2319,7 +2345,7 @@
             var moonSourceX = this.spritePos.x + NightMode.phases[this.currentPhase];
             var moonOutputWidth = moonSourceWidth;
             var starSize = NightMode.config.STAR_SIZE;
-            var starSourceX = pao.spriteDefinition.LDPI.STAR.x;
+            var starSourceX = Runner.spriteDefinition.LDPI.STAR.x;
 
             if (IS_HIDPI) {
                 moonSourceWidth *= 2;
@@ -2327,7 +2353,7 @@
                 moonSourceX = this.spritePos.x +
                     (NightMode.phases[this.currentPhase] * 2);
                 starSize *= 2;
-                starSourceX = pao.spriteDefinition.HDPI.STAR.x;
+                starSourceX = Runner.spriteDefinition.HDPI.STAR.x;
             }
 
             this.canvasCtx.save();
@@ -2336,7 +2362,7 @@
             // Stars.
             if (this.drawStars) {
                 for (var i = 0; i < NightMode.config.NUM_STARS; i++) {
-                    this.canvasCtx.drawImage(pao.imageSprite,
+                    this.canvasCtx.drawImage(Runner.imageSprite,
                         starSourceX, this.stars[i].sourceY, starSize, starSize,
                         Math.round(this.stars[i].x), this.stars[i].y,
                         NightMode.config.STAR_SIZE, NightMode.config.STAR_SIZE);
@@ -2344,7 +2370,7 @@
             }
 
             // Moon.
-            this.canvasCtx.drawImage(pao.imageSprite, moonSourceX,
+            this.canvasCtx.drawImage(Runner.imageSprite, moonSourceX,
                 this.spritePos.y, moonSourceWidth, moonSourceHeight,
                 Math.round(this.xPos), this.yPos,
                 moonOutputWidth, NightMode.config.HEIGHT);
@@ -2364,10 +2390,10 @@
                 this.stars[i].y = getRandomNum(0, NightMode.config.STAR_MAX_Y);
 
                 if (IS_HIDPI) {
-                    this.stars[i].sourceY = pao.spriteDefinition.HDPI.STAR.y +
+                    this.stars[i].sourceY = Runner.spriteDefinition.HDPI.STAR.y +
                         NightMode.config.STAR_SIZE * 2 * i;
                 } else {
-                    this.stars[i].sourceY = pao.spriteDefinition.LDPI.STAR.y +
+                    this.stars[i].sourceY = Runner.spriteDefinition.LDPI.STAR.y +
                         NightMode.config.STAR_SIZE * i;
                 }
             }
@@ -2453,13 +2479,13 @@
          * Draw the horizon line.
          */
         draw: function () {
-            this.canvasCtx.drawImage(pao.imageSprite, this.sourceXPos[0],
+            this.canvasCtx.drawImage(Runner.imageSprite, this.sourceXPos[0],
                 this.spritePos.y,
                 this.sourceDimensions.WIDTH, this.sourceDimensions.HEIGHT,
                 this.xPos[0], this.yPos,
                 this.dimensions.WIDTH, this.dimensions.HEIGHT);
 
-            this.canvasCtx.drawImage(pao.imageSprite, this.sourceXPos[1],
+            this.canvasCtx.drawImage(Runner.imageSprite, this.sourceXPos[1],
                 this.spritePos.y,
                 this.sourceDimensions.WIDTH, this.sourceDimensions.HEIGHT,
                 this.xPos[1], this.yPos,
@@ -2682,7 +2708,7 @@
                 this.obstacleHistory.unshift(obstacleType.type);
 
                 if (this.obstacleHistory.length > 1) {
-                    this.obstacleHistory.splice(pao.config.MAX_OBSTACLE_DUPLICATION);
+                    this.obstacleHistory.splice(Runner.config.MAX_OBSTACLE_DUPLICATION);
                 }
             }
         },
@@ -2699,7 +2725,7 @@
                 duplicateCount = this.obstacleHistory[i] == nextObstacleType ?
                     duplicateCount + 1 : 0;
             }
-            return duplicateCount >= pao.config.MAX_OBSTACLE_DUPLICATION;
+            return duplicateCount >= Runner.config.MAX_OBSTACLE_DUPLICATION;
         },
 
         /**
@@ -2749,7 +2775,7 @@ function getCookie(name) {
 }
 
 function onDocumentLoad() {
-    new pao('.interstitial-wrapper');
+    new Runner('.interstitial-wrapper');
 }
 
 document.addEventListener('DOMContentLoaded', onDocumentLoad);

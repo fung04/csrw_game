@@ -6,5 +6,6 @@ app_name = 'game_trex'
 
 urlpatterns = [
     path('', views.game, name='game'),
-    path('result/', views.get_score),
+    path('set-result/', views.set_result),
+    path('get-result/', views.get_result),
 ]

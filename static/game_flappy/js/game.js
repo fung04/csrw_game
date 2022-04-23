@@ -15,7 +15,7 @@ function getCookie(name) {
 }
 
 const token = getCookie('csrftoken');
-
+var serverScore;     
 
 var game = new Phaser.Game(320, 505, Phaser.AUTO, 'game'); //实例化game
 game.States = {}; //存放state对象
@@ -56,6 +56,18 @@ game.States.preload = function() {
         game.load.image('play_tip', '/static/game_flappy/assets/instructions.png');
         game.load.image('game_over', '/static/game_flappy/assets/gameover.png');
         game.load.image('score_board', '/static/game_flappy/assets/scoreboard.png');
+        this.fetchScore();
+    }
+    this.fetchScore = function() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/game-flappy/get-result/', true);
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                serverScore = response.score;
+            }
+        }
+        xhr.send();
     }
     this.create = function() {
         game.state.start('menu');
@@ -190,16 +202,12 @@ game.States.play = function() {
     this.showGameOverText = function() {
 
         this.scoreText.destroy();
-        // let result_from_server = document.getElementById("result").textContent;
-
-        let result = window.btoa((window.btoa(this.score)).toString().concat(token));
-
-        game.bestScore = m || 0;
+        game.bestScore = serverScore || 0;
 
         if (this.score > game.bestScore) {
             game.bestScore = this.score; //最好分数
 
-            fetch("/game-flappy/result/", {
+            fetch("/game-flappy/set-result/", {
                 method: "post",
                 credentials: "same-origin",
                 headers: {

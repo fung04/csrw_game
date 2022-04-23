@@ -5,5 +5,6 @@ app_name = 'game_flappy'
 
 urlpatterns = [
     path('', views.flappy, name='game'),
-    path('result/', views.result, name='result'),
+    path('set-result/', views.set_result, name='result'),
+    path('get-result/', views.get_result),
 ]

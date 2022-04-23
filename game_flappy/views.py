@@ -13,7 +13,7 @@ def flappy(request):
     return render(request, 'game_flappy/index.html', {'result': obj})
 
 
-def result(request):
+def set_result(request):
     user = request.user if str(request.user) != "AnonymousUser" else User.objects.get(username='test_user')
 
     if request.method == 'POST':
@@ -27,4 +27,13 @@ def result(request):
         return redirect('game_flappy:flappy')
 
     return JsonResponse("", safe=False)
+
+
+def get_result(request):
+    user = request.user if str(request.user) != "AnonymousUser" else User.objects.get(username='test_user')
+
+    if request.method == 'GET':
+        obj = FlappyScore.objects.get(user=user)
+        print(obj.score)
+        return JsonResponse({'score': obj.score})
 

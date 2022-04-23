@@ -25,7 +25,7 @@ def game(request):
     return render(request, 'game_2048/index.html', {'obj': obj, 'data': state})
 
 
-def set_score(request):
+def set_result(request):
     user = request.user if str(request.user) != "AnonymousUser" else User.objects.get(username='test_user')
 
     if request.method == 'POST':
@@ -38,7 +38,7 @@ def set_score(request):
         obj = Game2048.objects.get(user=user)
         if game_state != obj.game_state:
             json_read_best = json.loads(game_state)  # let string to JSON object
-            obj.best_scores = json_read_best['best']  # extract value of best from JSON objest
+            obj.best_score = json_read_best['best']  # extract value of best from JSON objest
             obj.game_state = game_state
             obj.save()
     else:

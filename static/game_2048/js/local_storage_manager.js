@@ -14,7 +14,6 @@ function getCookie(name) {
     return cookieValue;
 }
 
-
 window.fakeStorage = {
   _data: {},
 
@@ -42,15 +41,17 @@ function LocalStorageManager() {
   var supported = this.localStorageSupported();//receive TRUE of FALSE from localStorageSupported function
   this.storage = supported ? window.localStorage : window.fakeStorage;
 
-  this.storage.setItem(this.bestScoreKey, parseInt(f) );//get best mark from server
-    if (j === "bnVsbA=="){
-        this.storage.removeItem(this.gameStateKey);
-        this.gameStateKey     = "gameState";
-    }else{
-        let data = window.atob(j)
-        this.storage.removeItem(this.gameStateKey);
-        this.storage.setItem(this.gameStateKey,data) //get game_flappy state from server and decode
-    }
+  this.storage.setItem(this.bestScoreKey, parseInt(serverBestSocre) );//get best mark from server
+
+  if (serverGameState === "bnVsbA=="){
+      this.storage.removeItem(this.gameStateKey);
+      this.gameStateKey     = "gameState";
+  }else{
+    console.log("local manager = "+ serverGameState);
+      let stateData = window.atob(serverGameState);
+      this.storage.removeItem(this.gameStateKey);
+      this.storage.setItem(this.gameStateKey,stateData); //get game_flappy state from server and decode
+  }
 }
 
 //check support local storage or not
