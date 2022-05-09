@@ -1,17 +1,17 @@
 function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      // Does this cookie string begin with the name we want?
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
     }
-    return cookieValue;
+  }
+  return cookieValue;
 }
 
 window.fakeStorage = {
@@ -35,23 +35,32 @@ window.fakeStorage = {
 };
 
 function LocalStorageManager() {
-  this.bestScoreKey     = "bestScore";
-  this.gameStateKey     = "gameState";
+  this.bestScoreKey = "bestScore";
+  this.gameStateKey = "gameState";
 
   var supported = this.localStorageSupported();//receive TRUE of FALSE from localStorageSupported function
   this.storage = supported ? window.localStorage : window.fakeStorage;
 
-  this.storage.setItem(this.bestScoreKey, parseInt(serverBestSocre) );//get best mark from server
+  // fetch the best score from server
+  fetch("/game-2048/get-result/")
+    .then(response => response.json())
+    .then(serverGameState => {
 
-  if (serverGameState === "bnVsbA=="){
-      this.storage.removeItem(this.gameStateKey);
-      this.gameStateKey     = "gameState";
-  }else{
-    console.log("local manager = "+ serverGameState);
-      let stateData = window.atob(serverGameState);
-      this.storage.removeItem(this.gameStateKey);
-      this.storage.setItem(this.gameStateKey,stateData); //get game_flappy state from server and decode
-  }
+      // set the best score fom serverGameState
+      this.storage.setItem(this.bestScoreKey, parseInt(serverGameState.best));
+
+      // check if serverGameState is empty
+      if (Object.keys(serverGameState).length > 0) {
+        this.storage.removeItem(this.gameStateKey);
+        //set game state to serverGameState
+        this.storage.setItem(this.gameStateKey, JSON.stringify(serverGameState));
+      } else {
+        console.log("no game_flappy state");
+        this.storage.removeItem(this.gameStateKey);
+        // set game state to null
+        this.gameStateKey = "gameState";
+      }
+    });
 }
 
 //check support local storage or not
@@ -70,7 +79,7 @@ LocalStorageManager.prototype.localStorageSupported = function () {
 
 // Best score getters/setters
 LocalStorageManager.prototype.getBestScore = function () {
-    return this.storage.getItem(this.bestScoreKey) || 0;
+  return this.storage.getItem(this.bestScoreKey) || 0;
 };
 
 

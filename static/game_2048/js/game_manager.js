@@ -24,8 +24,9 @@ GameManager.prototype.restart = function () {
 
 GameManager.prototype.save = function (terminate) {
 
-  let getGameState = btoa(JSON.stringify(this.serialize()));
+  let getGameState = JSON.stringify(this.serialize());
 
+  // prevent multiple saves
   if(this.tempGameState !== getGameState){
     this.tempGameState = getGameState;
 
