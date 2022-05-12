@@ -1,38 +1,40 @@
-from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from .models import GameTrex
-from django.contrib.auth.models import User
 import json
 
+from django.contrib.auth.models import User
+from django.http import JsonResponse
+from django.shortcuts import redirect, render
+
+from .models import GameTrex
 
 # Create your views here.
 
 def game(request):
-    user = request.user if str(request.user) != "AnonymousUser" else User.objects.get(username='test_user')
 
-    obj, created = GameTrex.objects.get_or_create(user=user)
-
-    return render(request, "game_trex/index.html", {'result': obj})
+    return render(request, "game_trex/index.html")
 
 
 def set_result(request):
-    user = request.user if str(request.user) != "AnonymousUser" else User.objects.get(username='test_user')
+    user = request.user if str(
+        request.user) != "AnonymousUser" else User.objects.get(username='test_user')
 
     if request.method == 'POST':
-        array_result = json.loads(request.body)  # convert decode result to array
+        
+        list_result = json.loads(request.body)
 
-        distance = array_result.pop(-1)  # distance run store in last list
-        del array_result[:3]  # delete useless data in array
+        # distance run store in end of list
+        distance_run = list_result.pop(-1)
 
-        result = str()  # init result as string
-        for i in array_result:
-            result += str(i)  # concatenate best result
+        # delete unused data
+        del list_result[:3]
+
+        # concatinate list to string
+        best_score = ''.join(list_result)
 
         obj = GameTrex.objects.get(user=user)
 
-        if distance > obj.best_distance:
-            obj.best_score = int(result)
-            obj.best_distance = distance
+        if distance_run > obj.best_distance:
+            obj.best_score = int(best_score)
+            obj.best_distance = distance_run
             obj.save()
     else:
         return redirect('game_trex:game')
@@ -41,7 +43,8 @@ def set_result(request):
 
 
 def get_result(request):
-    user = request.user if str(request.user) != "AnonymousUser" else User.objects.get(username='test_user')
+    user = request.user if str(
+        request.user) != "AnonymousUser" else User.objects.get(username='test_user')
 
     if request.method == 'GET':
         obj = GameTrex.objects.get(user=user)

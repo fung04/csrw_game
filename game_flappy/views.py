@@ -1,27 +1,27 @@
-from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from .models import FlappyScore
-from django.contrib.auth.models import User
 import json
+
+from django.contrib.auth.models import User
+from django.http import JsonResponse
+from django.shortcuts import redirect, render
+
+from .models import GameFlappy
 
 
 def flappy(request):
-    user = request.user if str(request.user) != "AnonymousUser" else User.objects.get(username='test_user')
 
-    obj, created = FlappyScore.objects.get_or_create(user=user)
-
-    return render(request, 'game_flappy/index.html', {'result': obj})
+    return render(request, 'game_flappy/index.html')
 
 
 def set_result(request):
-    user = request.user if str(request.user) != "AnonymousUser" else User.objects.get(username='test_user')
+    user = request.user if str(
+        request.user) != "AnonymousUser" else User.objects.get(username='test_user')
 
     if request.method == 'POST':
         score = json.loads(request.body)
-        obj = FlappyScore.objects.get(user=user)
+        obj = GameFlappy.objects.get(user=user)
 
-        if score > obj.score:
-            obj.score = score
+        if score > obj.best_score:
+            obj.best_score = score
             obj.save()
     else:
         return redirect('game_flappy:flappy')
@@ -30,10 +30,10 @@ def set_result(request):
 
 
 def get_result(request):
-    user = request.user if str(request.user) != "AnonymousUser" else User.objects.get(username='test_user')
+    # Check if user is logged in if not set user to test_user
+    user = request.user if str(
+        request.user) != "AnonymousUser" else User.objects.get(username='test_user')
 
     if request.method == 'GET':
-        obj = FlappyScore.objects.get(user=user)
-        print(obj.score)
-        return JsonResponse({'score': obj.score})
-
+        obj, created = GameFlappy.objects.get_or_create(user=user)
+        return JsonResponse({'score': obj.best_score})
